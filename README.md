@@ -1,4 +1,7 @@
 # BK-Precision-390A
+
+![Original Page 13 Fax image](images/BK390A-000.png)
+
 OCR'd Serial Protocol for the BK Precision 390A VOM
 
 #### Measurement Modes and Ranges
@@ -46,6 +49,7 @@ CR and LF are delimiters used to separate the blocks.
 
 Page 13
 
+![Original Page 14 Fax image](images/BK390A-001.png)
 
 Serial Data Format and Function
 
@@ -94,6 +98,8 @@ The following table lists the code for each range in each measurement mode.
 | 01101101  |          |         |          |         |            |             | 40.00mF     |
 
 Page 14
+
+![Original Page 15 Fax image](images/BK390A-002.png)
 
 Digits and Status
 
@@ -145,6 +151,8 @@ function is enabled or not.
 |   0   |   1   |  DC   |  AC   | AUTO  | APO   |       |
 
 Page 15
+
+![Original Page 16 Fax image](images/BK390A-003.png)
 
 #### **4.3 DIGIT 3 – DIGIT 0**
 Digit 3 is the most significant digit on the LCD panel, and digit 0 is the least significant digit. When the LCD
