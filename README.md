@@ -19,18 +19,18 @@ OCR'd Serial Protocol for the BK Precision 390A VOM
 
 #### Measurement Modes and Ranges
 
-| Measurement Mode | Auto                  | Manual                      | Control Range                | Initial Range |
-|------------------|-----------------------|-----------------------------|------------------------------|---------------|
-| V (DC/AC)        | VR1 → VR5            | VR4 → VR1 + 1, VR5 → VR1    | 400.0mV → 1000V             | 400.0mV       |
-| µA (DC/AC)       | R1 → R2              | R1 → R2, R2 → R1            | 400.0µA → 4000µA            | 400.0µA       |
-| mA (DC/AC)       | R1 → R2              | R1 → R2, R5 → R1            | 40.00mA → 400.0mA           | 40.00mA       |
-| A (DC/AC)        | fixed                | fixed                       | 40.00A                      | 40.00A        |
-| Ω                | OR1 → OR8            | OR8 → OR8 + 1, OR8 → OR1    | 400.0Ω → 40.00MΩ            | "OL" 400.0Ω   |
-| Capacitance      | C1 → C8              | C1 → C8 + 1, C8 → C1        | 4.000nF → 40.00mF           | 4.000nF       |
-| Continuity       | fixed                | fixed                       | 400.0Ω                      | "OL" 400.0Ω   |
-| Diode            | fixed                | fixed                       | 4.000V                      | "OL" 4.000V   |
-| Frequency        | FR1 → FR6            | FR1 → FR1 + 1, FR6 → FR1    | 4.000KHz → 400.0MHz         | 4.000MHz      |
-| RPM              | RP1 → RP6            | RP1 → RP1 + 1, RP6 → RP1    | 40.00KRPM → 4000MRPM        | 40.00KRPM     |
+| Measurement Mode | Auto       | Manual                      | Control Range         | Initial Range |
+|------------------|------------|-----------------------------|-----------------------|---------------|
+| V (DC/AC)        | VR1 → VR5  | VRi → VRi + 1, VR5 → VR1    | 400.0mV → 1000V       | 400.0mV       |
+| µA (DC/AC)       | R1 → R2    | R1 → R2, R2 → R1            | 400.0µA → 4000µA      | 400.0µA       |
+| mA (DC/AC)       | R1 → R2    | R1 → R2, R5 → R1            | 40.00mA → 400.0mA     | 40.00mA       |
+| A (DC/AC)        | fixed      | fixed                       | 40.00A                | 40.00A        |
+| Ω                | OR1 → OR6  | ORi → ORi + 1, OR6 → OR1    | 400.0Ω → 40.00MΩ      | "OL" 400.0Ω   |
+| Capacitance      | C1 → C8    | Ci → Ci + 1, C8 → C1        | 4.000nF → 40.00mF     | 4.000nF       |
+| Continuity       | fixed      | fixed                       | 400.0Ω                | "OL" 400.0Ω   |
+| Diode            | fixed      | fixed                       | 4.000V                | "OL" 4.000V   |
+| Frequency        | FR1 → FR6  | FRi → FRi + 1, FR6 → FR1    | 4.000KHz → 400.0MHz   | 4.000MHz      |
+| RPM              | RP1 → RP6  | RPi → RPi + 1, RP6 → RP1    | 40.00KRPM → 4000MRPM  | 40.00KRPM     |
 
 #### Notes
 - Pushing RANGE resets all existing special modes except for VAHz mode.
