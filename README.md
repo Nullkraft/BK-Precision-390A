@@ -73,22 +73,22 @@ conversion cycle. The detailed data format of each packet is listed below.
 This packet indicates the measurement mode of the meter. The following table summarizes the transmitted code
 for each mode. Note that the encoding of this packet is different from the encoding of FC1–FC4 switch.
 
-| Code      | Measurement Mode  |
-|-----------|-------------------|
-| 01110101  | Voltage           |
-| 01111000  | µA Current        |
-| 01110001  | mA Current        |
-| 01111111  | A Current         |
-| 01100001  | Ω                 |
-| 01100011  | Continuity        |
-| 01100001  | Diode             |
-| 01100100  | Frequency/RPM     |
-| 01101110  | Capacitance       |
-| 01101000  | Temperature       |
-| 01111010  | ADP0              |
-| 01111100  | ADP1              |
-| 01111000  | ADP2              |
-| 01111010  | ADP3              |
+| Code     | Measurement Mode  |
+|----------|-------------------|
+| 0111011  | Voltage           |
+| 0111101  | µA Current        |
+| 0111001  | mA Current        |
+| 0111111  | A Current         |
+| 0110011  | Ω                 |
+| 0110101  | Continuity        |
+| 0110001  | Diode             |
+| 0110010  | Frequency/RPM[1]  |
+| 0110110  | Capacitance       |
+| 0110100  | Temperature[2]    |
+| 0111110  | ADP0              |
+| 0111100  | ADP1              |
+| 0111000  | ADP2              |
+| 0111010  | ADP3              |
 
 **Notes:**
 1. The Judge bit in the Status packet determines whether it is frequency mode or RPM mode.
