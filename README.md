@@ -161,58 +161,35 @@ function is enabled or not.
 
 | Bit 6 | Bit 5 | Bit 4 | Bit 3 | Bit 2 | Bit 1 | Bit 0 |
 |-------|-------|-------|-------|-------|-------|-------|
-|   0   |   1   |  DC   |  AC   | AUTO  | APO   |       |
+|   0   |   1   |   1   |  DC   |  AC   | AUTO  | APO   |
 
 Page 15
 
 <img src="images/BK390A-003.png" alt="Page 16 Fax image" width="500" height="682">
 
-#### **4.3 DIGIT 3 – DIGIT 0**
-Digit 3 is the most significant digit on the LCD panel, and digit 0 is the least significant digit. When the LCD
-panel shows OL, the serial port outputs 4000.
+#### **4.7 CR**
+Carriage return. The transmitted code is 0001101.
 
-| Digit | Code      |
-|-------|-----------|
-| 0     | 0110000   |
-| 1     | 01100001  |
-| 2     | 01100100  |
-| 3     | 01100011  |
-| 4     | 01101000  |
-| 5     | 01101001  |
-| 6     | 01101100  |
-| 7     | 01101101  |
-| 8     | 01101110  |
-| 9     | 01101111  |
+#### **4.8 LF**
+Line feed. The transmitted code is 0001010.
 
-#### **4.4 STATUS**
-The format of this packet is shown below. The Judge field is meaningful only when the Function packet indicates
-Frequency/RPM mode or Temperature mode. In Temperature mode, Judge is 1 if the unit is °C and is 0 if the unit
-is °F. In Frequency/RPM mode, Judge is 1 if the meter operates in Frequency mode; otherwise, it is 0. The Sign
-field indicates whether the minus sign on the LCD panel is on or off. BATT field is one if battery low condition
-is true. OL indicates input overflow.
+#### **5 Miscellaneous**
+#### **5.1 The Buzzer**
+The conditions which the meter turns on the buzzer include:
+1. Changing measurement mode generates one beep.
+2. Pressing any of the push functions generates one beep, if the function is valid.
+3. Power on and re-power on generates one beep.
+4. Input overflow in voltage, current, and capacitance measurement mode generates one beep every 0.3 seconds 
+   (or 3.33 beeps per second).
+5. Continuity check generates a continuous 4KHz beep whenever the bar graph count is less than 3.
+6. Auto power off generates a 2KHz beep which lasts for 1.5 seconds.
 
-| Bit 6 | Bit 5 | Bit 4 | Bit 3   | Bit 2 | Bit 1 | Bit 0 |
-|-------|-------|-------|---------|-------|-------|-------|
-|   0   |   1   |   1   | Judge   |  Sign | BATT  |  OL   |
+The following figures show the output waveforms from the BUZOUT pin.
 
-#### **4.5 OPTION 1**
-This packet contains information on special measurement modes. The format of this packet is shown below.
-The three non-constant fields are set to one when the meter operates in the corresponding special modes.
+(a) Continuous 4KHz beep:
+    0.5ms period waveform.
 
-| Bit 6 | Bit 5 | Bit 4 | Bit 3  | Bit 2 | Bit 1 | Bit 0 |
-|-------|-------|-------|--------|-------|-------|-------|
-|   0   |   1   |   1   | PMAX   | PMIN  | V/AHz |       |
-
-#### **4.6 OPTION 2**
-This packet contains information on the operation modes of the meter. The format is shown below. The DC field
-indicates that the meter operates in DC measurement mode, either voltage or current. The AC field indicates
-that the meter operates in AC measurement mode. The AUTO field is set to one if the meter operates in automatic
-mode and is set to zero when the meter operates in manual mode. The APO field indicates whether auto power off
-function is enabled or not.
-
-| Bit 6 | Bit 5 | Bit 4 | Bit 3 | Bit 2 | Bit 1 | Bit 0 |
-|-------|-------|-------|-------|-------|-------|-------|
-|   0   |   1   |  DC   |  AC   | AUTO  | APO   |       |
+(b) 3.33 beeps/second:
+    0.15 sec ON, 0.3 sec OFF waveform.
 
 Page 16
-
