@@ -1,5 +1,15 @@
 # BK-Precision-390A
 
+When I first purchased my 390A I couldn't find any documents anywhere for communicating with the serial port.
+Finally I contacted the company and what they sent me are the fax of a fax of a fax of a fax images that you
+are seeing. If you've never tried to fax a document that was already faxed I can tell you that they degrade
+extremely quickly. As bad as they are it is almost impossible to decipher the bit patterns provided in the
+tables. So I finally decided to try using OpenAI's 'OCR with GTP Vision' AI to read and convert the document.
+The initial results are amazing compared to any non-AI OCR software.
+
+Today is Jan. 4, 2025 when I am posting the non-verified result from the AI. I say non-verified because I 
+haven't read and compared the results. Any bit patterns will have to be tested in code.
+
 <img src="images/BK390A-000.png" alt="Page 13 Fax image" width="500" height="673">
 
 OCR'd Serial Protocol for the BK Precision 390A VOM
