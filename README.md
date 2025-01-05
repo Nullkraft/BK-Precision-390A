@@ -150,7 +150,7 @@ The three non-constant fields are set to one when the meter operates in the corr
 
 | Bit 6 | Bit 5 | Bit 4 | Bit 3  | Bit 2 | Bit 1 | Bit 0 |
 |-------|-------|-------|--------|-------|-------|-------|
-|   0   |   1   |   1   | PMAX   | PMIN  | V/AHz |       |
+|   0   |   1   |   1   | Pmax   | Pmin  |   0   | VAHz  |
 
 #### **4.6 OPTION 2**
 This packet contains information on the operation modes of the meter. The format is shown below. The DC field
