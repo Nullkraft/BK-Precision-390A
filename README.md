@@ -10,6 +10,9 @@ The initial results are amazing compared to any non-AI OCR software.
 Today is Jan. 4, 2025 when I am posting the non-verified result from the AI. I say non-verified because I 
 haven't read and compared the results. Any bit patterns will have to be tested in code.
 
+This [github project](https://github.com/TechRelief/BK390A-Display/blob/master/BK390A-Display/BK390Decoder.cs)
+ may provide some additional insights into the original document.
+
 <img src="images/BK390A-000.png" alt="Page 13 Fax image" width="500" height="673">
 
 OCR'd Serial Protocol for the BK Precision 390A VOM
