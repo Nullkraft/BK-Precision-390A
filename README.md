@@ -99,16 +99,16 @@ This packet indicates the full scale range of the meter. When the meter operates
 mode, or current (A) mode, this packet is always 0110000 since the full scale range in these modes are fixed.
 The following table lists the code for each range in each measurement mode.
 
-| Code      | V        | mA      | µA       | Ω       | Frequency  | RPM         | Capacitance |
-|-----------|----------|---------|----------|---------|------------|-------------|-------------|
-| 01100000  | 400.0mV  | 40.00mA | 400.0µA  | 400.0Ω  | 4.000KHz   | 40.00KRPM   | 4.000nF     |
-| 01100001  | 4.000V   | 400.0mA | 4.000µA  | 4.000KΩ | 40.00KHz   | 400.0KRPM   | 40.00nF     |
-| 01100100  | 40.00V   |         |          |         | 400.0KHz   | 4.000MRPM   |             |
-| 01101001  | 400.0V   |         |          | 400.0KΩ | 4.000MHz   |             | 4.000µF     |
-| 01101000  | 4000V    |         |          | 4.000MΩ | 40.00MHz   |             | 40.00µF     |
-| 01101001  |          |         |          |         | 400.0MHz   |             | 400.0µF     |
-| 01101100  |          |         |          |         |            |             | 4.000mF     |
-| 01101101  |          |         |          |         |            |             | 40.00mF     |
+| Code     | V        | mA      | µA       | Ω       | Frequency  | RPM         | Capacitance |
+|----------|----------|---------|----------|---------|------------|-------------|-------------|
+| 0110000  | 400.0mV  | 40.00mA | 400.0µA  | 400.0Ω  | 4.000KHz   | 40.00KRPM   | 4.000nF     |
+| 0110001  | 4.000V   | 400.0mA | 4.000µA  | 4.000KΩ | 40.00KHz   | 400.0KRPM   | 40.00nF     |
+| 0110010  | 40.00V   |         |          |         | 400.0KHz   | 4.000MRPM   |             |
+| 0110011  | 400.0V   |         |          | 400.0KΩ | 4.000MHz   |             | 4.000µF     |
+| 0110100  | 4000V    |         |          | 4.000MΩ | 40.00MHz   |             | 40.00µF     |
+| 0110101  |          |         |          |         | 400.0MHz   |             | 400.0µF     |
+| 0110110  |          |         |          |         |            |             | 4.000mF     |
+| 0110111  |          |         |          |         |            |             | 40.00mF     |
 
 Page 14
 
@@ -120,18 +120,18 @@ Digits and Status
 Digit 3 is the most significant digit on the LCD panel, and digit 0 is the least significant digit. When the LCD
 panel shows OL, the serial port outputs 4000.
 
-| Digit | Code      |
-|-------|-----------|
-| 0     | 0110000   |
-| 1     | 01100001  |
-| 2     | 01100100  |
-| 3     | 01100011  |
-| 4     | 01101000  |
-| 5     | 01101001  |
-| 6     | 01101100  |
-| 7     | 01101101  |
-| 8     | 01101110  |
-| 9     | 01101111  |
+| Digit | Code     |
+|-------|----------|
+| 0     | 0110000  |
+| 1     | 0110001  |
+| 2     | 0110010  |
+| 3     | 0110011  |
+| 4     | 0110100  |
+| 5     | 0110101  |
+| 6     | 0110110  |
+| 7     | 0110111  |
+| 8     | 0111000  |
+| 9     | 0111001  |
 
 #### **4.4 STATUS**
 The format of this packet is shown below. The Judge field is meaningful only when the Function packet indicates
