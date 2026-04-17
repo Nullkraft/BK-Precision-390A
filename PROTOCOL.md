@@ -93,6 +93,7 @@ for each mode. Note that the encoding of this packet is different from the encod
 **Notes:**
 1. The Judge bit in the Status packet determines whether it is frequency mode or RPM mode.
 2. The Judge bit in the Status packet determines whether the unit is Celsius or Fahrenheit.
+3. The Instruction Manual states that temperature resolution is 1 °C and 1 °F.
 
 #### **4.2 RANGE**
 This packet indicates the full scale range of the meter. When the meter operates in continuity mode, diode
