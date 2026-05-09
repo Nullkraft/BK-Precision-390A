@@ -29,6 +29,11 @@ DEFAULT_GLOB_PATTERNS = (
     "/dev/serial/by-id/*",
 )
 
+RS232_UNREACHABLE_HINT = (
+    "Check that the BK 390A is on, the serial cable is connected, and the "
+    "front-panel RS232 button has been pressed."
+)
+
 
 def load_parser():
     parser_path = Path(__file__).resolve().with_name("bk390a_parser.py")
@@ -53,6 +58,12 @@ def list_candidate_ports() -> list[str]:
     for pattern in DEFAULT_GLOB_PATTERNS:
         ports.extend(glob.glob(pattern))
     return sorted(set(ports))
+
+
+def meter_timeout(port: str) -> TimeoutError:
+    return TimeoutError(
+        "timed out waiting for data from %s. %s" % (port, RS232_UNREACHABLE_HINT)
+    )
 
 
 class FrameCache:
@@ -87,7 +98,7 @@ class FrameCache:
                 if remaining <= 0:
                     if self._last_error is not None:
                         raise TimeoutError(self._last_error)
-                    raise TimeoutError("timed out waiting for data from %s" % port)
+                    raise meter_timeout(port)
                 self._condition.wait(timeout=remaining)
 
     def next_after(self, port: str, after_seq: int, timeout_s: float) -> dict[str, Any]:
@@ -102,7 +113,7 @@ class FrameCache:
                 if remaining <= 0:
                     if self._last_error is not None:
                         raise TimeoutError(self._last_error)
-                    raise TimeoutError("timed out waiting for data from %s" % port)
+                    raise meter_timeout(port)
                 self._condition.wait(timeout=remaining)
 
     def _latest_for_port_locked(self, port: str) -> dict[str, Any] | None:
@@ -185,6 +196,86 @@ class FrameCache:
 
 
 frame_cache = FrameCache()
+snapshot_cache_lock = threading.Lock()
+snapshot_cache: dict[str, dict[str, Any]] = {}
+expected_profiles: dict[str, dict[str, Any]] = {}
+
+
+def age_seconds(timestamp: str) -> float:
+    now = datetime.now(timezone.utc)
+    arrival = datetime.fromisoformat(timestamp)
+    return (now - arrival).total_seconds()
+
+
+def meter_setup_from_measurement(measurement: dict[str, Any]) -> dict[str, Any]:
+    status = measurement.get("status", {})
+    option1 = measurement.get("option1", {})
+    option2 = measurement.get("option2", {})
+    setup = {
+        "function": measurement.get("function"),
+        "mode": measurement.get("mode"),
+        "range_code": measurement.get("range_code"),
+        "range_label": measurement.get("range_label"),
+        "unit": measurement.get("unit"),
+        "decimals": measurement.get("decimals"),
+        "dc": option2.get("dc"),
+        "ac": option2.get("ac"),
+        "auto": option2.get("auto"),
+        "apo": option2.get("apo"),
+        "pmax": option1.get("pmax"),
+        "pmin": option1.get("pmin"),
+        "vahz": option1.get("vahz"),
+        "battery_low": status.get("battery_low"),
+        "overflow": status.get("overflow"),
+    }
+    return {key: value for key, value in setup.items() if value is not None}
+
+
+def nested_matches(actual: Any, expected: Any) -> bool:
+    if isinstance(expected, dict):
+        if not isinstance(actual, dict):
+            return False
+        for key, value in expected.items():
+            if key not in actual or not nested_matches(actual[key], value):
+                return False
+        return True
+    return actual == expected
+
+
+def build_snapshot(port: str, frame: dict[str, Any]) -> dict[str, Any]:
+    measurement = frame["measurement"]
+    setup = meter_setup_from_measurement(measurement)
+    expected_profile = expected_profiles.get(port)
+    snapshot = {
+        "timestamp": utc_timestamp(),
+        "port": port,
+        "raw_frame": frame["raw_frame"],
+        "arrival_timestamp": frame["arrival_timestamp"],
+        "age_s": age_seconds(frame["arrival_timestamp"]),
+        "setup": setup,
+        "measurement": measurement,
+        "cache": {
+            "state": "fresh",
+            "reason": "snapshot_refresh",
+            "timestamp": utc_timestamp(),
+        },
+    }
+    if expected_profile is not None:
+        comparison_target = snapshot if "setup" in expected_profile else setup
+        snapshot["expected_profile"] = expected_profile
+        snapshot["expected_match"] = nested_matches(comparison_target, expected_profile)
+    return snapshot
+
+
+def store_snapshot(port: str, snapshot: dict[str, Any]) -> None:
+    with snapshot_cache_lock:
+        snapshot_cache[port] = dict(snapshot)
+
+
+def cached_snapshot(port: str) -> dict[str, Any] | None:
+    with snapshot_cache_lock:
+        snapshot = snapshot_cache.get(port)
+        return None if snapshot is None else dict(snapshot)
 
 
 def read_one_frame(port: str, timeout_s: float) -> tuple[str, dict[str, Any], dict[str, Any]]:
@@ -199,6 +290,113 @@ def bk390a_list_ports() -> dict[str, Any]:
         "timestamp": utc_timestamp(),
         "ports": list_candidate_ports(),
         "patterns": list(DEFAULT_GLOB_PATTERNS),
+    }
+
+
+@mcp.tool()
+def bk390a_snapshot_refresh(
+    port: str = DEFAULT_PORT,
+    timeout_s: float = 2.0,
+    require_stable: bool = True,
+    max_frames: int = 6,
+) -> dict[str, Any]:
+    """Read a meter frame, derive the current setup, and store it in the cache."""
+    read_result = bk390a_read(
+        port=port,
+        timeout_s=timeout_s,
+        require_stable=require_stable,
+        max_frames=max_frames,
+    )
+    frame = {
+        "raw_frame": read_result["raw_frame"],
+        "arrival_timestamp": read_result["arrival_timestamp"],
+        "measurement": read_result["measurement"],
+    }
+    snapshot = build_snapshot(port, frame)
+    snapshot["stable"] = read_result["stable"]
+    snapshot["frames_seen"] = read_result["frames_seen"]
+    store_snapshot(port, snapshot)
+    return {
+        "timestamp": utc_timestamp(),
+        "port": port,
+        "source": "meter",
+        "snapshot": snapshot,
+    }
+
+
+@mcp.tool()
+def bk390a_snapshot_get(
+    port: str = DEFAULT_PORT,
+    timeout_s: float = 2.0,
+    require_stable: bool = True,
+    max_frames: int = 6,
+) -> dict[str, Any]:
+    """Return the cached meter setup, refreshing from the meter if no cache exists."""
+    snapshot = cached_snapshot(port)
+    if snapshot is not None:
+        return {
+            "timestamp": utc_timestamp(),
+            "port": port,
+            "source": "cache",
+            "snapshot": snapshot,
+        }
+    return bk390a_snapshot_refresh(
+        port=port,
+        timeout_s=timeout_s,
+        require_stable=require_stable,
+        max_frames=max_frames,
+    )
+
+
+@mcp.tool()
+def bk390a_snapshot_cached(port: str = DEFAULT_PORT) -> dict[str, Any]:
+    """Return the cached meter setup without touching the serial port."""
+    snapshot = cached_snapshot(port)
+    return {
+        "timestamp": utc_timestamp(),
+        "port": port,
+        "found": snapshot is not None,
+        "snapshot": snapshot,
+    }
+
+
+@mcp.tool()
+def bk390a_apply_profile(
+    profile: dict[str, Any],
+    port: str = DEFAULT_PORT,
+    refresh_after: bool = False,
+    timeout_s: float = 2.0,
+) -> dict[str, Any]:
+    """Store the expected meter setup for later cached verification.
+
+    The BK 390A serial protocol is output-only, so this records what the
+    technician says the front panel should be; it does not command the meter.
+    """
+    with snapshot_cache_lock:
+        expected_profiles[port] = dict(profile)
+
+    if refresh_after:
+        return bk390a_snapshot_refresh(
+            port=port,
+            timeout_s=timeout_s,
+            require_stable=True,
+            max_frames=6,
+        )
+
+    snapshot = cached_snapshot(port)
+    if snapshot is not None:
+        comparison_target = snapshot if "setup" in profile else snapshot.get("setup", {})
+        snapshot["expected_profile"] = dict(profile)
+        snapshot["expected_match"] = nested_matches(comparison_target, profile)
+        store_snapshot(port, snapshot)
+
+    return {
+        "timestamp": utc_timestamp(),
+        "port": port,
+        "status": "recorded",
+        "note": "BK 390A setup is controlled from the meter front panel, not over serial.",
+        "expected_profile": dict(profile),
+        "snapshot": snapshot,
     }
 
 
