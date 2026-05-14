@@ -22,6 +22,10 @@ from mcp.server.fastmcp import FastMCP
 
 
 DEFAULT_PORT = "/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_D-if00-port0"
+BK390A_PORT_MARKERS = (
+    "usb-Prolific_Technology_Inc._USB-Serial_Controller",
+    "Prolific",
+)
 
 DEFAULT_GLOB_PATTERNS = (
     "/dev/ttyUSB*",
@@ -58,6 +62,20 @@ def list_candidate_ports() -> list[str]:
     for pattern in DEFAULT_GLOB_PATTERNS:
         ports.extend(glob.glob(pattern))
     return sorted(set(ports))
+
+
+def resolve_default_port() -> str:
+    for marker in BK390A_PORT_MARKERS:
+        for port in list_candidate_ports():
+            if marker in port:
+                return port
+    return DEFAULT_PORT
+
+
+def resolve_port(port: str) -> str:
+    if port == DEFAULT_PORT:
+        return resolve_default_port()
+    return port
 
 
 def meter_timeout(port: str) -> TimeoutError:
@@ -279,16 +297,18 @@ def cached_snapshot(port: str) -> dict[str, Any] | None:
 
 
 def read_one_frame(port: str, timeout_s: float) -> tuple[str, dict[str, Any], dict[str, Any]]:
+    port = resolve_port(port)
     frame = frame_cache.latest(port, timeout_s)
     return frame["raw_frame"], frame["measurement"], frame
 
 
 @mcp.tool()
-def bk390a_list_ports() -> dict[str, Any]:
+def list_ports() -> dict[str, Any]:
     """List likely serial devices for the BK Precision 390A."""
     return {
         "timestamp": utc_timestamp(),
         "ports": list_candidate_ports(),
+        "resolved_default_port": resolve_default_port(),
         "patterns": list(DEFAULT_GLOB_PATTERNS),
     }
 
@@ -301,6 +321,7 @@ def bk390a_snapshot_refresh(
     max_frames: int = 6,
 ) -> dict[str, Any]:
     """Read a meter frame, derive the current setup, and store it in the cache."""
+    port = resolve_port(port)
     read_result = bk390a_read(
         port=port,
         timeout_s=timeout_s,
@@ -332,6 +353,7 @@ def bk390a_snapshot_get(
     max_frames: int = 6,
 ) -> dict[str, Any]:
     """Return the cached meter setup, refreshing from the meter if no cache exists."""
+    port = resolve_port(port)
     snapshot = cached_snapshot(port)
     if snapshot is not None:
         return {
@@ -351,6 +373,7 @@ def bk390a_snapshot_get(
 @mcp.tool()
 def bk390a_snapshot_cached(port: str = DEFAULT_PORT) -> dict[str, Any]:
     """Return the cached meter setup without touching the serial port."""
+    port = resolve_port(port)
     snapshot = cached_snapshot(port)
     return {
         "timestamp": utc_timestamp(),
@@ -372,6 +395,7 @@ def bk390a_apply_profile(
     The BK 390A serial protocol is output-only, so this records what the
     technician says the front panel should be; it does not command the meter.
     """
+    port = resolve_port(port)
     with snapshot_cache_lock:
         expected_profiles[port] = dict(profile)
 
@@ -408,6 +432,7 @@ def bk390a_read(
     max_frames: int = 6,
 ) -> dict[str, Any]:
     """Read and decode a measurement frame from the BK Precision 390A."""
+    port = resolve_port(port)
     raw_frame, parsed, frame = read_one_frame(port, timeout_s)
     frames_seen = 1
 
@@ -464,6 +489,7 @@ def bk390a_read(
 @mcp.tool()
 def bk390a_read_raw_frame(port: str = DEFAULT_PORT, timeout_s: float = 2.0) -> dict[str, Any]:
     """Read one raw meter frame and decode it."""
+    port = resolve_port(port)
     raw_frame, parsed, frame = read_one_frame(port, timeout_s)
     now = datetime.now(timezone.utc)
     arrival = datetime.fromisoformat(frame["arrival_timestamp"])
