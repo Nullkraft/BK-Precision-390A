@@ -188,9 +188,7 @@ class FrameCache:
                 with self._condition:
                     self._last_error = str(exc)
                     self._condition.notify_all()
-                if handle is not None:
-                    handle.close()
-                    handle = None
+                handle = None
                 current_port = None
                 time.sleep(0.5)
                 continue
