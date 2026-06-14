@@ -1,4 +1,4 @@
-# BK-Precision-390A
+# BK-Precision-390A-MCP
 
 This repo contains the BK Precision 390A parser and MCP server used during bring-up and meter-based verification.
 
@@ -61,4 +61,3 @@ That makes it useful for bring-up tasks where the lead position or front-panel s
 - “Refresh the BK meter setup from the instrument.”
 - “Record the BK meter expected setup as voltage DC auto range.”
 - “Tell me whether the BK meter is reachable.”
-

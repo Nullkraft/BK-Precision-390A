@@ -1,4 +1,4 @@
-# BK-Precision-390A
+# BK-Precision-390A-MCP
 
 When I first purchased my 390A I couldn't find any documents anywhere for communicating with the serial port.
 Finally I contacted the company and what they sent me are the fax of a fax of a fax of a fax images that you
