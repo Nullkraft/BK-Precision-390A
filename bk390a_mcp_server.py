@@ -20,7 +20,7 @@ from typing import Any
 import serial
 from mcp.server.fastmcp import FastMCP
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "SA-Technician-MCP"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "hardware-mcp-common"))
 from hardware_ports import SERIAL_GLOB_PATTERNS, list_serial_ports, prefer_by_marker
 
 
