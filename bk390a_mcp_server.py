@@ -21,7 +21,7 @@ import serial
 from mcp.server.fastmcp import FastMCP
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "hardware-mcp-common"))
-from hardware_ports import SERIAL_GLOB_PATTERNS, list_serial_ports, prefer_by_marker
+from hardware_ports import SERIAL_GLOB_PATTERNS, list_serial_ports, prefer_by_marker, sort_by_marker
 
 
 DEFAULT_PORT = "/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_D-if00-port0"
@@ -55,7 +55,7 @@ def utc_timestamp() -> str:
 
 
 def list_candidate_ports() -> list[str]:
-    return list_serial_ports()
+    return sort_by_marker(list_serial_ports(), BK390A_PORT_MARKERS)
 
 
 def resolve_default_port() -> str:
@@ -288,9 +288,31 @@ def cached_snapshot(port: str) -> dict[str, Any] | None:
 
 
 def read_one_frame(port: str, timeout_s: float) -> tuple[str, dict[str, Any], dict[str, Any]]:
+    if port == DEFAULT_PORT:
+        return read_one_frame_from_candidates(timeout_s)
     port = resolve_port(port)
     frame = frame_cache.latest(port, timeout_s)
     return frame["raw_frame"], frame["measurement"], frame
+
+
+def read_one_frame_from_candidates(timeout_s: float) -> tuple[str, dict[str, Any], dict[str, Any]]:
+    candidates = list_candidate_ports()
+    if not candidates:
+        raise RuntimeError("no candidate serial ports found")
+
+    failures = []
+    for candidate in candidates:
+        try:
+            frame = frame_cache.latest(candidate, timeout_s)
+            return frame["raw_frame"], frame["measurement"], frame
+        except Exception as exc:
+            failures.append({"port": candidate, "error": str(exc)})
+
+    raise RuntimeError(
+        "no BK390A meter stream found; checked=%s" % (
+            ", ".join("%s (%s)" % (item["port"], item["error"]) for item in failures)
+        )
+    )
 
 
 @mcp.tool()
@@ -312,13 +334,13 @@ def bk390a_snapshot_refresh(
     max_frames: int = 6,
 ) -> dict[str, Any]:
     """Read a meter frame, derive the current setup, and store it in the cache."""
-    port = resolve_port(port)
     read_result = bk390a_read(
         port=port,
         timeout_s=timeout_s,
         require_stable=require_stable,
         max_frames=max_frames,
     )
+    port = read_result["port"]
     frame = {
         "raw_frame": read_result["raw_frame"],
         "arrival_timestamp": read_result["arrival_timestamp"],
@@ -344,12 +366,11 @@ def bk390a_snapshot_get(
     max_frames: int = 6,
 ) -> dict[str, Any]:
     """Return the cached meter setup, refreshing from the meter if no cache exists."""
-    port = resolve_port(port)
-    snapshot = cached_snapshot(port)
+    snapshot = None if port == DEFAULT_PORT else cached_snapshot(resolve_port(port))
     if snapshot is not None:
         return {
             "timestamp": utc_timestamp(),
-            "port": port,
+            "port": snapshot["port"],
             "source": "cache",
             "snapshot": snapshot,
         }
@@ -423,8 +444,8 @@ def bk390a_read(
     max_frames: int = 6,
 ) -> dict[str, Any]:
     """Read and decode a measurement frame from the BK Precision 390A."""
-    port = resolve_port(port)
     raw_frame, parsed, frame = read_one_frame(port, timeout_s)
+    port = frame["port"]
     frames_seen = 1
 
     if not require_stable:
@@ -480,8 +501,8 @@ def bk390a_read(
 @mcp.tool()
 def bk390a_verify_connection(port: str = DEFAULT_PORT, timeout_s: float = 2.0) -> dict[str, Any]:
     """Verify meter communication by requiring a parseable BK Precision 390A frame."""
-    port = resolve_port(port)
     raw_frame, parsed, frame = read_one_frame(port, timeout_s)
+    port = frame["port"]
     now = datetime.now(timezone.utc)
     arrival = datetime.fromisoformat(frame["arrival_timestamp"])
     return {
@@ -510,8 +531,8 @@ def bk390a_verify_connection(port: str = DEFAULT_PORT, timeout_s: float = 2.0) -
 @mcp.tool()
 def bk390a_read_raw_frame(port: str = DEFAULT_PORT, timeout_s: float = 2.0) -> dict[str, Any]:
     """Read one raw meter frame and decode it."""
-    port = resolve_port(port)
     raw_frame, parsed, frame = read_one_frame(port, timeout_s)
+    port = frame["port"]
     now = datetime.now(timezone.utc)
     arrival = datetime.fromisoformat(frame["arrival_timestamp"])
     return {
