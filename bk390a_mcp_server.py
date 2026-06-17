@@ -478,6 +478,36 @@ def bk390a_read(
 
 
 @mcp.tool()
+def bk390a_verify_connection(port: str = DEFAULT_PORT, timeout_s: float = 2.0) -> dict[str, Any]:
+    """Verify meter communication by requiring a parseable BK Precision 390A frame."""
+    port = resolve_port(port)
+    raw_frame, parsed, frame = read_one_frame(port, timeout_s)
+    now = datetime.now(timezone.utc)
+    arrival = datetime.fromisoformat(frame["arrival_timestamp"])
+    return {
+        "timestamp": utc_timestamp(),
+        "port": port,
+        "verified": True,
+        "method": "valid_bk390a_frame",
+        "raw_frame": raw_frame,
+        "evidence": {
+            "frame_length": len(raw_frame),
+            "function_code": parsed.get("function_code"),
+            "function": parsed.get("function"),
+            "mode": parsed.get("mode"),
+            "range_code": parsed.get("range_code"),
+            "range_label": parsed.get("range_label"),
+            "unit": parsed.get("unit"),
+            "display": parsed.get("display"),
+            "summary": parsed.get("summary"),
+        },
+        "measurement": parsed,
+        "arrival_timestamp": frame["arrival_timestamp"],
+        "age_s": (now - arrival).total_seconds(),
+    }
+
+
+@mcp.tool()
 def bk390a_read_raw_frame(port: str = DEFAULT_PORT, timeout_s: float = 2.0) -> dict[str, Any]:
     """Read one raw meter frame and decode it."""
     port = resolve_port(port)
