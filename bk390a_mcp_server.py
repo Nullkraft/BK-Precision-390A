@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from collections import deque
 from datetime import datetime, timezone
-import glob
 import importlib.util
 from pathlib import Path
+import sys
 import threading
 import time
 from typing import Any
@@ -20,17 +20,14 @@ from typing import Any
 import serial
 from mcp.server.fastmcp import FastMCP
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "SA-Technician-MCP"))
+from hardware_ports import SERIAL_GLOB_PATTERNS, list_serial_ports, prefer_by_marker
+
 
 DEFAULT_PORT = "/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_D-if00-port0"
 BK390A_PORT_MARKERS = (
     "usb-Prolific_Technology_Inc._USB-Serial_Controller",
     "Prolific",
-)
-
-DEFAULT_GLOB_PATTERNS = (
-    "/dev/ttyUSB*",
-    "/dev/ttyACM*",
-    "/dev/serial/by-id/*",
 )
 
 RS232_UNREACHABLE_HINT = (
@@ -58,17 +55,13 @@ def utc_timestamp() -> str:
 
 
 def list_candidate_ports() -> list[str]:
-    ports: list[str] = []
-    for pattern in DEFAULT_GLOB_PATTERNS:
-        ports.extend(glob.glob(pattern))
-    return sorted(set(ports))
+    return list_serial_ports()
 
 
 def resolve_default_port() -> str:
-    for marker in BK390A_PORT_MARKERS:
-        for port in list_candidate_ports():
-            if marker in port:
-                return port
+    preferred_port = prefer_by_marker(list_candidate_ports(), BK390A_PORT_MARKERS)
+    if preferred_port is not None:
+        return preferred_port
     return DEFAULT_PORT
 
 
@@ -307,7 +300,7 @@ def list_ports() -> dict[str, Any]:
         "timestamp": utc_timestamp(),
         "ports": list_candidate_ports(),
         "resolved_default_port": resolve_default_port(),
-        "patterns": list(DEFAULT_GLOB_PATTERNS),
+        "patterns": list(SERIAL_GLOB_PATTERNS),
     }
 
 
