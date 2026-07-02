@@ -326,6 +326,32 @@ def list_ports() -> dict[str, Any]:
     }
 
 
+@mcp.tool(name="list-tools")
+async def user_list_tools() -> dict[str, Any]:
+    """List the user-facing tools exposed by this server."""
+    tools = await mcp.list_tools()
+    tool_rows = [
+        {
+            "name": tool.name,
+            "title": tool.title,
+            "description": tool.description,
+            "input_schema": tool.inputSchema,
+        }
+        for tool in tools
+    ]
+    lines = ["Available tools:"]
+    for tool in tool_rows:
+        title = f" ({tool['title']})" if tool["title"] else ""
+        description = tool["description"] or "No description."
+        lines.append(f"- {tool['name']}{title}: {description}")
+    return {
+        "server": mcp.name,
+        "tool_count": len(tool_rows),
+        "tools": tool_rows,
+        "display_text": "\n".join(lines),
+    }
+
+
 @mcp.tool()
 def bk390a_snapshot_refresh(
     port: str = DEFAULT_PORT,
